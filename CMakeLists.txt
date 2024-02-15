@@ -16,7 +16,7 @@ set(CATKIN_DEPENDENCIES
   )
 
 set(LIBRARIES
-  MrsUavGazeboTesting_TestGazeboGeneric
+  MrsUavGazeboTesting_TestGenericGazebo
   )
 
 find_package(catkin REQUIRED COMPONENTS
@@ -36,16 +36,16 @@ include_directories(
 
 # Test Generic
 
-add_library(MrsUavGazeboTesting_TestGazeboGeneric
+add_library(MrsUavGazeboTesting_TestGenericGazebo
   src/test_gazebo_generic.cpp
   )
 
-target_link_libraries(MrsUavGazeboTesting_TestGazeboGeneric
+target_link_libraries(MrsUavGazeboTesting_TestGenericGazebo
   ${catkin_LIBRARIES}
   ${Eigen_LIBRARIES}
   )
 
-add_dependencies(MrsUavGazeboTesting_TestGazeboGeneric
+add_dependencies(MrsUavGazeboTesting_TestGenericGazebo
   ${${PROJECT_NAME}_EXPORTED_TARGETS}
   ${catkin_EXPORTED_TARGETS}
   )
