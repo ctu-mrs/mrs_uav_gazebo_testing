@@ -16,6 +16,7 @@
   <depend>mrs_lib</depend>
   <depend>mrs_msgs</depend>
   <depend>mrs_uav_testing</depend>
+  <depend>mrs_uav_gazebo_simulation</depend>
   <depend>roscpp</depend>
 
   <export>
