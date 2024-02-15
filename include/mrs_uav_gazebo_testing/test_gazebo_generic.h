@@ -33,7 +33,7 @@ class TestGenericGZ : public mrs_uav_testing::TestGeneric {
   
 public:
   TestGenericGZ();
-  std::tuple<std::optional<std::shared_ptr<UAVHandlerGZ>>, std::string> getUAVHandler(const std::string &uav_name, const bool use_hw_api);
+  std::tuple<std::optional<std::shared_ptr<UAVHandlerGZ>>, std::string> getUAVHandler(const std::string &uav_name, const bool use_hw_api=true);
 };
 
 }  // namespace mrs_uav_gazebo_testing
