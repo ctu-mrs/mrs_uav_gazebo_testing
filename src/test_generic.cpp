@@ -1,14 +1,21 @@
-#include <mrs_uav_gazebo_testing/test_gazebo_generic.h>
+#include <mrs_uav_gazebo_testing/test_generic.h>
 
 namespace mrs_uav_gazebo_testing
 {
-  
-UAVHandlerGZ::UAVHandlerGZ(std::string uav_name, mrs_lib::SubscribeHandlerOptions shopts, bool use_hw_api) : UAVHandler(uav_name, shopts, use_hw_api) {
+
+UAVHandler::UAVHandler(std::string uav_name, mrs_lib::SubscribeHandlerOptions shopts, bool use_hw_api)
+    : mrs_uav_testing::UAVHandler(uav_name, shopts, use_hw_api) {
+
   // | ------------------- subscribe handlers ------------------- |
+
   sh_gazebo_spawner_diag_ = mrs_lib::SubscribeHandler<mrs_msgs::GazeboSpawnerDiagnostics>(shopts_, "/mrs_drone_spawner/diagnostics");
+
   // | --------------------- service clients -------------------- |
+
   sch_spawn_gazebo_uav_ = mrs_lib::ServiceClientHandler<mrs_msgs::String>(nh_, "/mrs_drone_spawner/spawn");
+
   // | -------------------- publish handlers -------------------- |
+
   ph_gazebo_model_state_ = mrs_lib::PublisherHandler<gazebo_msgs::ModelState>(nh_, "/gazebo/set_model_state");
 
   initialized_gz_tools_ = true;
@@ -18,9 +25,10 @@ UAVHandlerGZ::UAVHandlerGZ(std::string uav_name, mrs_lib::SubscribeHandlerOption
 
 /* checkPreconditions() //{ */
 
-std::tuple<bool, std::string> UAVHandlerGZ::checkPreconditions(void) {
+std::tuple<bool, std::string> UAVHandler::checkPreconditions(void) {
 
-  auto [success, message] = UAVHandler::checkPreconditions();
+  auto [success, message] = mrs_uav_testing::UAVHandler::checkPreconditions();
+
   if (!success) {
     ROS_ERROR_STREAM("[" << ros::this_node::getName().c_str() << "]: " << message);
     return {false, message};
@@ -41,10 +49,9 @@ std::tuple<bool, std::string> UAVHandlerGZ::checkPreconditions(void) {
 
 //}
 
-
 /* spawn() //{ */
 
-std::tuple<bool, std::string> UAVHandlerGZ::spawn(const std::string &gazebo_spawner_params) {
+std::tuple<bool, std::string> UAVHandler::spawn(const std::string &gazebo_spawner_params) {
 
   _gazebo_spawner_params_ = gazebo_spawner_params;
 
@@ -134,7 +141,7 @@ std::tuple<bool, std::string> UAVHandlerGZ::spawn(const std::string &gazebo_spaw
 
 /* moveTo() Implements direct transporting of a UAVs in the simulation//{ */
 
-std::tuple<bool, std::string> UAVHandlerGZ::moveTo(double x, double y, double z, double hdg) {
+std::tuple<bool, std::string> UAVHandler::moveTo(double x, double y, double z, double hdg) {
 
   gazebo_msgs::ModelState msg;
   msg.model_name = _uav_name_;
@@ -151,23 +158,27 @@ std::tuple<bool, std::string> UAVHandlerGZ::moveTo(double x, double y, double z,
   msg.pose.orientation.w = qw;
 
   ph_gazebo_model_state_.publish(msg);
+
   return {true, "Success!"};
 }
 
 //}
 
+/* constructor TestGeneric()//{ */
 
-TestGenericGZ::TestGenericGZ() : mrs_uav_testing::TestGeneric() {
+TestGeneric::TestGeneric() : mrs_uav_testing::TestGeneric() {
 }
+
+//}
 
 /* getUAVHandler() //{ */
 
-std::tuple<std::optional<std::shared_ptr<UAVHandlerGZ>>, std::string> TestGenericGZ::getUAVHandler(const std::string &uav_name, const bool use_hw_api) {
+std::tuple<std::optional<std::shared_ptr<UAVHandler>>, std::string> TestGeneric::getUAVHandler(const std::string &uav_name, const bool use_hw_api) {
 
   if (!initialized_) {
     return {std::nullopt, std::string("Can not obtain UAV handler for  " + uav_name + " - testing is not initialized yet!")};
   } else {
-    return {std::make_shared<UAVHandlerGZ>(uav_name, shopts_, use_hw_api), "Success!"};
+    return {std::make_shared<UAVHandler>(uav_name, shopts_, use_hw_api), "Success!"};
   }
 }
 

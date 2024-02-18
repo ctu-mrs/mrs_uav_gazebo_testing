@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
-#include <mrs_uav_gazebo_testing/test_gazebo_generic.h>
 
-class Tester : public mrs_uav_gazebo_testing::TestGenericGZ {
+#include <mrs_uav_gazebo_testing/test_generic.h>
+
+class Tester : public mrs_uav_gazebo_testing::TestGeneric {
 
 public:
   bool test();
@@ -9,7 +10,7 @@ public:
 
 bool Tester::test() {
 
-  std::shared_ptr<mrs_uav_gazebo_testing::UAVHandlerGZ> uh;
+  std::shared_ptr<mrs_uav_gazebo_testing::UAVHandler> uh;
 
   {
     auto [uhopt, message] = getUAVHandler(_uav_name_);
@@ -21,13 +22,13 @@ bool Tester::test() {
 
     uh = uhopt.value();
   }
-  
+
   {
     std::string _gazebo_spawner_params;
     pl_->loadParam("gazebo_spawner_params", _gazebo_spawner_params, std::string());
     ROS_INFO_STREAM("[" << ros::this_node::getName().c_str() << "]: Spawning " << _uav_name_);
     auto [success, message] = uh->spawn(_gazebo_spawner_params);
-    if (!success){
+    if (!success) {
       ROS_ERROR("[%s]: UAV failed to spawn: %s", ros::this_node::getName().c_str(), message.c_str());
       return false;
     }

@@ -5,7 +5,7 @@ catkin_add_executable_with_gtest(test_${TEST_NAME}
   )
 
 target_link_libraries(test_${TEST_NAME}
-  MrsUavGazeboTesting_TestGenericGazebo
+  MrsUavGazeboTesting_TestGeneric
   ${catkin_LIBRARIES}
   )
 
