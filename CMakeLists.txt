@@ -9,10 +9,12 @@ add_definitions(-Wextra)
 
 set(CATKIN_DEPENDENCIES
   cmake_modules
-  roscpp
+  gazebo_msgs
   mrs_lib
   mrs_msgs
   mrs_uav_testing
+  roscpp
+  rostest
   )
 
 set(LIBRARIES
