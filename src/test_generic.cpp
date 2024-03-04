@@ -186,9 +186,9 @@ std::tuple<std::optional<std::shared_ptr<UAVHandler>>, std::string> TestGeneric:
 
 /* setRTFactorPercent() sets the Gazebo real-time factor to the percent % of real time. //{ */
 std::tuple<bool, std::string> TestGeneric::setRTFactorPercent(double percent){
-  double rtfactor = 250.0*(percent/100.0);
+  double fps = 250.0*(percent/100.0);
   std::string command;
-  command = "gz physics -u "+std::to_string((int)(std::round(rtfactor)));
+  command = "gz physics -u "+std::to_string((int)(std::round(fps)));
   int status = system(command.c_str());
   if (status == 0){
     return {true, "Success!"};
