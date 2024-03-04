@@ -184,4 +184,20 @@ std::tuple<std::optional<std::shared_ptr<UAVHandler>>, std::string> TestGeneric:
 
 //}
 
+/* setRTFactorPercent() sets the Gazebo real-time factor to the percent % of real time. //{ */
+std::tuple<bool, std::string> TestGeneric::setRTFactorPercent(double percent){
+  double rtfactor = 250.0*(percent/100.0);
+  char command[30];
+  sprintf(command, "gz physics -u %d", (int)(std::round(rtfactor)));
+  int status = system((char*)command);
+  if (status == 0){
+    return {true, "Success!"};
+  }
+  else {
+    return {false, "Setting of RT factor to "+std::to_string(percent)+"% exited with the code "+std::to_string(status)+"!"};
+  }
+}
+//}
+
+
 }  // namespace mrs_uav_gazebo_testing
