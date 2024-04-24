@@ -22,7 +22,7 @@ class UAVHandler : public mrs_uav_testing::UAVHandler {
   std::string _gazebo_spawner_params_ = "";
 
 public:
-  UAVHandler(std::string uav_name, mrs_lib::SubscribeHandlerOptions shopts, bool use_hw_api);
+  UAVHandler(std::string uav_name, mrs_lib::SubscribeHandlerOptions shopts, std::shared_ptr<mrs_lib::Transformer> Transformer, bool use_hw_api);
 
   std::tuple<bool, std::string> checkPreconditions(void) override;
 
@@ -38,6 +38,7 @@ class TestGeneric : public mrs_uav_testing::TestGeneric {
 public:
   TestGeneric();
   std::tuple<std::optional<std::shared_ptr<UAVHandler>>, std::string> getUAVHandler(const std::string& uav_name, const bool use_hw_api = true);
+
   std::tuple<bool, std::string> setRTFactorPercent(double percent);
 };
 

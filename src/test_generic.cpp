@@ -3,8 +3,8 @@
 namespace mrs_uav_gazebo_testing
 {
 
-UAVHandler::UAVHandler(std::string uav_name, mrs_lib::SubscribeHandlerOptions shopts, bool use_hw_api)
-    : mrs_uav_testing::UAVHandler(uav_name, shopts, use_hw_api) {
+UAVHandler::UAVHandler(std::string uav_name, mrs_lib::SubscribeHandlerOptions shopts, std::shared_ptr<mrs_lib::Transformer> transformer, bool use_hw_api)
+    : mrs_uav_testing::UAVHandler(uav_name, shopts, transformer, use_hw_api) {
 
   // | ------------------- subscribe handlers ------------------- |
 
@@ -178,26 +178,28 @@ std::tuple<std::optional<std::shared_ptr<UAVHandler>>, std::string> TestGeneric:
   if (!initialized_) {
     return {std::nullopt, std::string("Can not obtain UAV handler for  " + uav_name + " - testing is not initialized yet!")};
   } else {
-    return {std::make_shared<UAVHandler>(uav_name, shopts_, use_hw_api), "Success!"};
+    return {std::make_shared<UAVHandler>(uav_name, shopts_, transformer_, use_hw_api), "Success!"};
   }
 }
 
 //}
 
 /* setRTFactorPercent() sets the Gazebo real-time factor to the percent % of real time. //{ */
-std::tuple<bool, std::string> TestGeneric::setRTFactorPercent(double percent){
-  double fps = 250.0*(percent/100.0);
+
+std::tuple<bool, std::string> TestGeneric::setRTFactorPercent(double percent) {
+
+  double      fps = 250.0 * (percent / 100.0);
   std::string command;
-  command = "gz physics -u "+std::to_string((int)(std::round(fps)));
+  command    = "gz physics -u " + std::to_string((int)(std::round(fps)));
   int status = system(command.c_str());
-  if (status == 0){
+
+  if (status == 0) {
     return {true, "Success!"};
-  }
-  else {
-    return {false, "Setting of RT factor to "+std::to_string(percent)+"% exited with the code "+std::to_string(status)+"!"};
+  } else {
+    return {false, "Setting of RT factor to " + std::to_string(percent) + "% exited with the code " + std::to_string(status) + "!"};
   }
 }
-//}
 
+//}
 
 }  // namespace mrs_uav_gazebo_testing
