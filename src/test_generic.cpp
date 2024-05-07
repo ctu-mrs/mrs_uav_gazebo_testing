@@ -3,12 +3,13 @@
 namespace mrs_uav_gazebo_testing
 {
 
-UAVHandler::UAVHandler(std::string uav_name, mrs_lib::SubscribeHandlerOptions shopts, std::shared_ptr<mrs_lib::Transformer> transformer, bool use_hw_api)
+UAVHandler::UAVHandler(std::string uav_name, std::shared_ptr<mrs_lib::SubscribeHandlerOptions> shopts, std::shared_ptr<mrs_lib::Transformer> transformer,
+                       bool use_hw_api)
     : mrs_uav_testing::UAVHandler(uav_name, shopts, transformer, use_hw_api) {
 
   // | ------------------- subscribe handlers ------------------- |
 
-  sh_gazebo_spawner_diag_ = mrs_lib::SubscribeHandler<mrs_msgs::GazeboSpawnerDiagnostics>(shopts_, "/mrs_drone_spawner/diagnostics");
+  sh_gazebo_spawner_diag_ = mrs_lib::SubscribeHandler<mrs_msgs::GazeboSpawnerDiagnostics>(*shopts_, "/mrs_drone_spawner/diagnostics");
 
   // | --------------------- service clients -------------------- |
 
@@ -173,12 +174,13 @@ TestGeneric::TestGeneric() : mrs_uav_testing::TestGeneric() {
 
 /* getUAVHandler() //{ */
 
-std::tuple<std::optional<std::shared_ptr<UAVHandler>>, std::string> TestGeneric::getUAVHandler(const std::string &uav_name, const bool use_hw_api) {
+std::tuple<std::optional<std::shared_ptr<mrs_uav_gazebo_testing::UAVHandler>>, std::string> TestGeneric::getUAVHandler(const std::string &uav_name,
+                                                                                                                       const bool         use_hw_api) {
 
   if (!initialized_) {
     return {std::nullopt, std::string("Can not obtain UAV handler for  " + uav_name + " - testing is not initialized yet!")};
   } else {
-    return {std::make_shared<UAVHandler>(uav_name, shopts_, transformer_, use_hw_api), "Success!"};
+    return {std::make_shared<mrs_uav_gazebo_testing::UAVHandler>(uav_name, shopts_, transformer_, use_hw_api), "Success!"};
   }
 }
 
