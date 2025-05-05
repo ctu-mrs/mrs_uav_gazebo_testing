@@ -3,21 +3,24 @@
 namespace mrs_uav_gazebo_testing
 {
 
-UAVHandler::UAVHandler(std::string uav_name, std::shared_ptr<mrs_lib::SubscribeHandlerOptions> shopts, std::shared_ptr<mrs_lib::Transformer> transformer,
+UAVHandler::UAVHandler(const rclcpp::Node::SharedPtr node, std::string uav_name, std::shared_ptr<mrs_lib::SubscriberHandlerOptions> shopts, std::shared_ptr<mrs_lib::Transformer> transformer,
                        bool use_hw_api)
-    : mrs_uav_testing::UAVHandler(uav_name, shopts, transformer, use_hw_api) {
+    : mrs_uav_testing::UAVHandler(node, uav_name, shopts, transformer, use_hw_api) {
 
-  // | ------------------- subscribe handlers ------------------- |
+  node_ = node;
+  clock_ = node->get_clock();
 
-  sh_gazebo_spawner_diag_ = mrs_lib::SubscribeHandler<mrs_msgs::GazeboSpawnerDiagnostics>(*shopts_, "/mrs_drone_spawner/diagnostics");
+  // | ------------------- subscriber handlers ------------------- |
+
+  sh_gazebo_spawner_diag_ = mrs_lib::SubscriberHandler<mrs_msgs::msg::GazeboSpawnerDiagnostics>(*shopts_, "/mrs_drone_spawner/diagnostics");
 
   // | --------------------- service clients -------------------- |
 
-  sch_spawn_gazebo_uav_ = mrs_lib::ServiceClientHandler<mrs_msgs::String>(nh_, "/mrs_drone_spawner/spawn");
+  sch_spawn_gazebo_uav_ = mrs_lib::ServiceClientHandler<mrs_msgs::srv::String>(node_, "/mrs_drone_spawner/spawn");
 
   // | -------------------- publish handlers -------------------- |
 
-  ph_gazebo_model_state_ = mrs_lib::PublisherHandler<gazebo_msgs::ModelState>(nh_, "/gazebo/set_model_state");
+  /* ph_gazebo_model_state_ = mrs_lib::PublisherHandler<gz_msgs::msg::Pose>(node_, "/control_world"); */
 
   initialized_gz_tools_ = true;
 
@@ -31,17 +34,17 @@ std::tuple<bool, std::string> UAVHandler::checkPreconditions(void) {
   auto [success, message] = mrs_uav_testing::UAVHandler::checkPreconditions();
 
   if (!success) {
-    ROS_ERROR_STREAM("[" << ros::this_node::getName().c_str() << "]: " << message);
+    RCLCPP_ERROR_STREAM(node_->get_logger(), "" << message);
     return {false, message};
   }
 
   if (!initialized_gz_tools_) {
-    ROS_ERROR_STREAM("[" << ros::this_node::getName().c_str() << "]: Gazebo UAV handler for " << _uav_name_ << " is not initialized!");
+    RCLCPP_ERROR_STREAM(node_->get_logger(), "Gazebo UAV handler for " << _uav_name_ << " is not initialized!");
     return {false, "Gazebo UAV handler for " + _uav_name_ + " is not initialized!"};
   }
 
   if (!spawned_) {
-    ROS_ERROR_STREAM("[" << ros::this_node::getName().c_str() << "]: Using Gazebo simulation, but UAV is not spawned!");
+    RCLCPP_ERROR_STREAM(node_->get_logger(), "Using Gazebo simulation, but UAV is not spawned!");
     return {false, "Using Gazebo simulation, but UAV is not spawned!"};
   }
 
@@ -60,11 +63,11 @@ std::tuple<bool, std::string> UAVHandler::spawn(const std::string &gazebo_spawne
 
   while (true) {
 
-    if (!ros::ok()) {
+    if (!rclcpp::ok()) {
       return {false, "shut down from outside"};
     }
 
-    ROS_INFO_THROTTLE(1.0, "[%s]: waiting for the Gazebo drone spawner", name_.c_str());
+    RCLCPP_INFO_THROTTLE(node_->get_logger(), *clock_, 1000, "waiting for the Gazebo drone spawner");
 
     if (sh_gazebo_spawner_diag_.hasMsg()) {
       break;
@@ -80,13 +83,13 @@ std::tuple<bool, std::string> UAVHandler::spawn(const std::string &gazebo_spawne
   // | ------------------- call spawn service ------------------- |
 
   {
-    mrs_msgs::String srv;
+    std::shared_ptr<mrs_msgs::srv::String::Request> request = std::make_shared<mrs_msgs::srv::String::Request>();
 
-    srv.request.value = _gazebo_spawner_params_;
+    request->value = _gazebo_spawner_params_;
 
-    bool service_call = sch_spawn_gazebo_uav_.call(srv);
+    auto response = sch_spawn_gazebo_uav_.callSync(request);
 
-    if (!service_call || !srv.response.success) {
+    if (!response || !response.value()->success) {
       return {false, "gazebo drone spawner service call failed"};
     }
   }
@@ -95,11 +98,11 @@ std::tuple<bool, std::string> UAVHandler::spawn(const std::string &gazebo_spawne
 
   while (true) {
 
-    if (!ros::ok()) {
+    if (!rclcpp::ok()) {
       return {false, "shut down from outside"};
     }
 
-    ROS_INFO_THROTTLE(1.0, "[%s]: waiting for the drone to spawn", name_.c_str());
+    RCLCPP_INFO_THROTTLE(node_->get_logger(), *clock_, 1000, "waiting for the drone to spawn");
 
     if (!sh_gazebo_spawner_diag_.getMsg()->processing) {
       break;
@@ -113,11 +116,11 @@ std::tuple<bool, std::string> UAVHandler::spawn(const std::string &gazebo_spawne
 
     while (true) {
 
-      if (!ros::ok()) {
+      if (!rclcpp::ok()) {
         return {false, "shut down from outside"};
       }
 
-      ROS_INFO_THROTTLE(1.0, "[%s]: waiting for the hw API", name_.c_str());
+      RCLCPP_INFO_THROTTLE(node_->get_logger(), *clock_, 1000, "waiting for the hw API");
 
       if (sh_hw_api_status_.hasMsg()) {
         if (sh_hw_api_status_.getMsg()->connected) {
@@ -140,30 +143,30 @@ std::tuple<bool, std::string> UAVHandler::spawn(const std::string &gazebo_spawne
 
 //}
 
-/* moveTo() Implements direct transporting of a UAVs in the simulation//{ */
+/* /1* moveTo() Implements direct transporting of a UAVs in the simulation//{ *1/ */
 
-std::tuple<bool, std::string> UAVHandler::moveTo(double x, double y, double z, double hdg) {
+/* std::tuple<bool, std::string> UAVHandler::moveTo(double x, double y, double z, double hdg) { */
 
-  gazebo_msgs::ModelState msg;
-  msg.model_name = _uav_name_;
+/*   gazebo_msgs::msg::ModelState msg; */
+/*   msg.model_name = _uav_name_; */
 
-  msg.pose.position.x = x;
-  msg.pose.position.y = y;
-  msg.pose.position.z = z;
+/*   msg.pose.position.x = x; */
+/*   msg.pose.position.y = y; */
+/*   msg.pose.position.z = z; */
 
-  double qw              = cos(hdg / 2.0);
-  double qz              = sin(hdg / 2.0);
-  msg.pose.orientation.x = 0;
-  msg.pose.orientation.y = 0;
-  msg.pose.orientation.z = qz;
-  msg.pose.orientation.w = qw;
+/*   double qw              = cos(hdg / 2.0); */
+/*   double qz              = sin(hdg / 2.0); */
+/*   msg.pose.orientation.x = 0; */
+/*   msg.pose.orientation.y = 0; */
+/*   msg.pose.orientation.z = qz; */
+/*   msg.pose.orientation.w = qw; */
 
-  ph_gazebo_model_state_.publish(msg);
+/*   ph_gazebo_model_state_.publish(msg); */
 
-  return {true, "Success!"};
-}
+/*   return {true, "Success!"}; */
+/* } */
 
-//}
+/* //} */
 
 /* constructor TestGeneric()//{ */
 
@@ -180,7 +183,7 @@ std::tuple<std::optional<std::shared_ptr<mrs_uav_gazebo_testing::UAVHandler>>, s
   if (!initialized_) {
     return {std::nullopt, std::string("Can not obtain UAV handler for  " + uav_name + " - testing is not initialized yet!")};
   } else {
-    return {std::make_shared<mrs_uav_gazebo_testing::UAVHandler>(uav_name, shopts_, transformer_, use_hw_api), "Success!"};
+    return {std::make_shared<mrs_uav_gazebo_testing::UAVHandler>(node_, uav_name, shopts_, transformer_, use_hw_api), "Success!"};
   }
 }
 
